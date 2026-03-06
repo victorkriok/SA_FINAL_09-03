@@ -6,9 +6,10 @@ public class Perfil
     public string Nome { get; set; }
     public string Descricao { get; set; }
 
-    public Perfil(Guid id, string nome, string descricao)
+    public Perfil(string nome, string descricao)
     {
-        Id = id;
+        
+        Id = Guid.NewGuid();
         Nome = nome;
         Descricao = descricao;
     }    
