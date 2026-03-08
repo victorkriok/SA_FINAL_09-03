@@ -1,0 +1,18 @@
+[
+  {
+    "ContainingType": "APIeloT_grupo_4.Controllers.SensorController",
+    "Method": "ReceberDados",
+    "RelativePath": "api/Sensor",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dados",
+        "Type": "APIeloT_grupo_4.Models.Leitura",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]
