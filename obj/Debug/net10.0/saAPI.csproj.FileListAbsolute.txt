@@ -159,3 +159,7 @@ C:\Users\berna\Documents\VSCode\sistemajunto\saAPI\obj\Debug\net10.0\refint\saAP
 C:\Users\berna\Documents\VSCode\sistemajunto\saAPI\obj\Debug\net10.0\saAPI.pdb
 C:\Users\berna\Documents\VSCode\sistemajunto\saAPI\obj\Debug\net10.0\saAPI.genruntimeconfig.cache
 C:\Users\berna\Documents\VSCode\sistemajunto\saAPI\obj\Debug\net10.0\ref\saAPI.dll
+C:\Users\berna\Documents\VSCode\sistemajunto\saAPI\bin\Debug\net10.0\BCrypt.Net-Next.dll
+C:\Users\berna\Documents\VSCode\sistemajunto\saAPI\bin\Debug\net10.0\Npgsql.dll
+C:\Users\berna\Documents\VSCode\sistemajunto\saAPI\bin\Debug\net10.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
+C:\Users\berna\Documents\VSCode\sistemajunto\saAPI\bin\Debug\net10.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
