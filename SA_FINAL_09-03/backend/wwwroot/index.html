@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EstoqueSA — Sistema de Produção</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111418;
+    --surface2: #1a1f26;
+    --border: #252c35;
+    --accent: #e8a020;
+    --green: #2ecc71;
+    --red: #e74c3c;
+    --blue: #3498db;
+    --purple: #9b59b6;
+    --text: #d4d8de;
+    --text-dim: #6b7580;
+    --text-bright: #f0f2f5;
+    --mono: 'Share Tech Mono', monospace;
+    --sans: 'Barlow', sans-serif;
+    --cond: 'Barlow Condensed', sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; overflow-x:hidden; }
+  body::before {
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image: linear-gradient(rgba(232,160,32,0.03) 1px,transparent 1px), linear-gradient(90deg,rgba(232,160,32,0.03) 1px,transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* ── LOGIN ───────────────────────────────────────────────── */
+  #login-screen { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:100; background:var(--bg); }
+  .login-box { width:420px; background:var(--surface); border:1px solid var(--border); border-top:3px solid var(--accent); padding:48px 40px; position:relative; }
+  .login-box::before { content:'SYS::AUTH'; font-family:var(--mono); font-size:10px; color:var(--accent); position:absolute; top:0; right:20px; background:var(--surface); padding:0 8px; transform:translateY(-50%); }
+  .login-logo { font-family:var(--cond); font-size:32px; font-weight:700; letter-spacing:4px; color:var(--text-bright); margin-bottom:4px; }
+  .login-logo span { color:var(--accent); }
+  .login-sub { font-family:var(--mono); font-size:11px; color:var(--text-dim); letter-spacing:2px; margin-bottom:40px; }
+
+  /* ── FIELDS ──────────────────────────────────────────────── */
+  .field-group { margin-bottom:20px; }
+  .field-group label { display:block; font-family:var(--mono); font-size:10px; color:var(--accent); letter-spacing:2px; margin-bottom:8px; }
+  .field-group input, .field-group select, .field-group textarea {
+    width:100%; background:var(--bg); border:1px solid var(--border); color:var(--text-bright);
+    font-family:var(--mono); font-size:14px; padding:12px 16px; outline:none; transition:border-color 0.2s;
+  }
+  .field-group input:focus, .field-group select:focus { border-color:var(--accent); }
+  .field-group select option { background:var(--surface); }
+
+  /* ── BUTTONS ─────────────────────────────────────────────── */
+  .btn { display:inline-flex; align-items:center; gap:8px; padding:12px 24px; font-family:var(--cond); font-size:14px; font-weight:600; letter-spacing:2px; text-transform:uppercase; cursor:pointer; border:none; transition:all 0.2s; }
+  .btn-primary { background:var(--accent); color:#000; }
+  .btn-primary:hover { background:#f0b030; }
+  .btn-danger { background:transparent; border:1px solid var(--red); color:var(--red); }
+  .btn-danger:hover { background:var(--red); color:#fff; }
+  .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text-dim); }
+  .btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+  .btn-success { background:transparent; border:1px solid var(--green); color:var(--green); }
+  .btn-success:hover { background:var(--green); color:#000; }
+  .btn-blue { background:transparent; border:1px solid var(--blue); color:var(--blue); }
+  .btn-blue:hover { background:var(--blue); color:#fff; }
+  .btn-full { width:100%; justify-content:center; }
+
+  /* ── APP ─────────────────────────────────────────────────── */
+  #app { display:none; min-height:100vh; position:relative; z-index:1; }
+
+  /* ── TOPBAR ──────────────────────────────────────────────── */
+  .topbar { height:56px; background:var(--surface); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 24px; gap:24px; position:sticky; top:0; z-index:50; }
+  .topbar-logo { font-family:var(--cond); font-size:20px; font-weight:700; letter-spacing:3px; color:var(--text-bright); flex-shrink:0; }
+  .topbar-logo span { color:var(--accent); }
+  .topbar-nav { display:flex; gap:4px; flex:1; overflow-x:auto; }
+  .nav-btn { padding:6px 16px; font-family:var(--cond); font-size:13px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; background:transparent; border:none; color:var(--text-dim); transition:all 0.2s; position:relative; white-space:nowrap; }
+  .nav-btn:hover { color:var(--text); }
+  .nav-btn.active { color:var(--accent); }
+  .nav-btn.active::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:2px; background:var(--accent); }
+  .topbar-user { display:flex; align-items:center; gap:12px; margin-left:auto; flex-shrink:0; }
+  .user-badge { font-family:var(--mono); font-size:11px; color:var(--text-dim); }
+  .user-badge span { color:var(--accent); font-weight:bold; }
+
+  /* ── PERFIL BADGE COLORS ─────────────────────────────────── */
+  .perfil-Admin     { color:#e8a020 !important; }
+  .perfil-SupervisorProducao { color:#3498db !important; }
+  .perfil-Almoxarife { color:#2ecc71 !important; }
+
+  /* ── MAIN ────────────────────────────────────────────────── */
+  .main { padding:32px; max-width:1400px; margin:0 auto; }
+
+  /* ── PAGE HEADER ─────────────────────────────────────────── */
+  .page-header { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:32px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+  .page-title { font-family:var(--cond); font-size:28px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text-bright); }
+  .page-title small { display:block; font-family:var(--mono); font-size:11px; color:var(--text-dim); font-weight:400; letter-spacing:3px; margin-bottom:4px; }
+
+  /* ── CARD ────────────────────────────────────────────────── */
+  .card { background:var(--surface); border:1px solid var(--border); padding:24px; margin-bottom:24px; }
+  .card-title { font-family:var(--cond); font-size:13px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+  .card-title::before { content:''; width:3px; height:14px; background:var(--accent); display:inline-block; }
+
+  /* ── GRID ────────────────────────────────────────────────── */
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px; }
+  .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+
+  /* ── TABLE ───────────────────────────────────────────────── */
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  thead tr { border-bottom:2px solid var(--accent); }
+  th { font-family:var(--mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); padding:10px 16px; text-align:left; font-weight:400; }
+  td { padding:12px 16px; border-bottom:1px solid var(--border); color:var(--text); vertical-align:middle; }
+  tr:hover td { background:rgba(232,160,32,0.03); }
+
+  /* ── BADGE ───────────────────────────────────────────────── */
+  .badge { display:inline-block; padding:3px 10px; font-family:var(--mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; border:1px solid; }
+  .badge-green  { color:var(--green);  border-color:var(--green);  background:rgba(46,204,113,0.08); }
+  .badge-red    { color:var(--red);    border-color:var(--red);    background:rgba(231,76,60,0.08); }
+  .badge-yellow { color:var(--accent); border-color:var(--accent); background:rgba(232,160,32,0.08); }
+  .badge-blue   { color:var(--blue);   border-color:var(--blue);   background:rgba(52,152,219,0.08); }
+  .badge-purple { color:var(--purple); border-color:var(--purple); background:rgba(155,89,182,0.08); }
+  .badge-gray   { color:var(--text-dim); border-color:var(--border); }
+
+  /* ── FORM ROW ────────────────────────────────────────────── */
+  .form-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:16px; }
+
+  /* ── ALERT ───────────────────────────────────────────────── */
+  .alert { padding:12px 16px; font-family:var(--mono); font-size:12px; margin-bottom:16px; border-left:3px solid; display:none; }
+  .alert.show { display:block; }
+  .alert-ok  { border-color:var(--green); color:var(--green); background:rgba(46,204,113,0.06); }
+  .alert-err { border-color:var(--red);   color:var(--red);   background:rgba(231,76,60,0.06); }
+
+  /* ── STAT ────────────────────────────────────────────────── */
+  .stat-box { background:var(--surface2); border:1px solid var(--border); padding:20px 24px; }
+  .stat-label { font-family:var(--mono); font-size:10px; letter-spacing:2px; color:var(--text-dim); text-transform:uppercase; margin-bottom:8px; }
+  .stat-value { font-family:var(--cond); font-size:36px; font-weight:700; color:var(--accent); line-height:1; }
+
+  /* ── ETAPA ───────────────────────────────────────────────── */
+  .etapa-list { display:flex; flex-direction:column; gap:8px; }
+  .etapa-item { display:flex; align-items:center; gap:16px; padding:14px 16px; background:var(--surface2); border:1px solid var(--border); transition:border-color 0.2s; }
+  .etapa-item:hover { border-color:var(--accent); }
+  .etapa-num { font-family:var(--mono); font-size:11px; color:var(--text-dim); width:28px; flex-shrink:0; }
+  .etapa-info { flex:1; }
+  .etapa-nome { font-family:var(--cond); font-size:15px; font-weight:600; color:var(--text-bright); }
+  .etapa-actions { display:flex; gap:8px; }
+
+  /* ── MODAL ───────────────────────────────────────────────── */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; display:none; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-top:3px solid var(--accent); padding:32px; width:520px; max-width:90vw; max-height:90vh; overflow-y:auto; }
+  .modal-title { font-family:var(--cond); font-size:18px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text-bright); margin-bottom:24px; }
+  .modal-actions { display:flex; gap:12px; justify-content:flex-end; margin-top:24px; }
+
+  /* ── ACCESS DENIED PANEL ─────────────────────────────────── */
+  .access-denied {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:300px; text-align:center; gap:16px;
+  }
+  .access-denied .icon { font-size:48px; opacity:.3; }
+  .access-denied h2 { font-family:var(--cond); font-size:22px; letter-spacing:3px; color:var(--text-dim); text-transform:uppercase; }
+  .access-denied p { font-family:var(--mono); font-size:11px; color:var(--text-dim); letter-spacing:1px; }
+
+  /* ── LOGS ────────────────────────────────────────────────── */
+  .log-row { display:flex; align-items:baseline; gap:12px; padding:8px 0; border-bottom:1px solid rgba(37,44,53,.5); font-family:var(--mono); font-size:12px; }
+  .log-time { color:var(--text-dim); font-size:10px; flex-shrink:0; }
+  .log-actor { color:var(--accent); flex-shrink:0; }
+  .log-action { color:var(--text); }
+  .log-ok   { color:var(--green); }
+  .log-fail { color:var(--red); }
+
+  /* ── PAGE ────────────────────────────────────────────────── */
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* ── MISC ────────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border); }
+  ::-webkit-scrollbar-thumb:hover { background:var(--accent); }
+  .empty { text-align:center; padding:48px; color:var(--text-dim); font-family:var(--mono); font-size:12px; letter-spacing:2px; }
+  .divider { border:none; border-top:1px solid var(--border); margin:24px 0; }
+</style>
+</head>
+<body>
+<!-- ──── Função para alertas ───────────────────────────── -->
+<div id="global-alert-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; width: 350px;"></div>
+<!-- ══════════════════════════════════════════════════════════
+     LOGIN
+═══════════════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">ESTOQUE<span>SA</span></div>
+    <div class="login-sub">SISTEMA DE CONTROLE DE PRODUÇÃO</div>
+    <div id="login-alert" class="alert"></div>
+    <div class="field-group">
+      <label>LOGIN</label>
+      <input type="text" id="login-input" placeholder="usuário" autocomplete="username"/>
+    </div>
+    <div class="field-group">
+      <label>SENHA</label>
+      <input type="password" id="senha-input" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') doLogin()"/>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">ENTRAR</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     APP SHELL
+═══════════════════════════════════════════════════════════ -->
+<div id="app">
+
+  <div class="topbar">
+    <div class="topbar-logo">ESTOQUE<span>SA</span></div>
+    <nav class="topbar-nav" id="topbar-nav">
+      <!-- preenchido dinamicamente por buildNav() -->
+    </nav>
+    <div class="topbar-user">
+      <div class="user-badge">
+        <span id="user-nome-badge">—</span>
+        &nbsp;·&nbsp;
+        <span id="user-cargo" class="user-badge">—</span>
+      </div>
+      <button class="btn btn-ghost" style="padding:6px 14px;font-size:12px" onclick="doLogout()">SAIR</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- ── DASHBOARD (Admin) ───────────────────────────────── -->
+    <div id="page-dashboard" class="page">
+      <div class="page-header">
+        <div class="page-title"><small>VISÃO GERAL</small>Dashboard</div>
+      </div>
+      <div class="grid-4" id="dash-stats">
+        <div class="stat-box"><div class="stat-label">Produtos</div><div class="stat-value" id="ds-produtos">—</div></div>
+        <div class="stat-box"><div class="stat-label">Ordens Ativas</div><div class="stat-value" id="ds-ordens">—</div></div>
+        <div class="stat-box"><div class="stat-label">Etapas Cadastradas</div><div class="stat-value" id="ds-etapas">—</div></div>
+        <div class="stat-box" style="border-top:2px solid var(--red)"><div class="stat-label">Estoque Baixo</div><div class="stat-value" style="color:var(--red)" id="ds-baixo">—</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">ÚLTIMAS ORDENS</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>OP#</th><th>Produto</th><th>Qtd</th><th>Status</th></tr></thead>
+              <tbody id="dash-ordens-tbody"><tr><td colspan="4" class="empty">Carregando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">PRODUTOS COM ESTOQUE BAIXO</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Produto</th><th>Qtd</th><th>Mínimo</th></tr></thead>
+              <tbody id="dash-baixo-tbody"><tr><td colspan="3" class="empty">Carregando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PRODUTOS ────────────────────────────────────────── -->
+    <div id="page-produtos" class="page">
+      <div class="page-header">
+        <div class="page-title"><small>MÓDULO 01</small>Produtos</div>
+        <div id="btn-novo-produto"></div>
+      </div>
+      <div id="produtos-alert" class="alert"></div>
+      <div class="card">
+        <div class="card-title">CATÁLOGO DE PRODUTOS</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#ID</th><th>Nome</th><th>Descrição</th><th>Preço</th><th>Qtd</th><th>Mínimo</th><th>Unidade</th><th>Status</th><th></th></tr></thead>
+            <tbody id="produtos-tbody"><tr><td colspan="9" class="empty">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ESTOQUE ─────────────────────────────────────────── -->
+    <div id="page-estoque" class="page">
+      <div class="page-header">
+        <div class="page-title"><small>MÓDULO 02</small>Movimentação de Estoque</div>
+        <div id="btn-nova-mov"></div>
+      </div>
+      <div id="estoque-alert" class="alert"></div>
+      <div class="card">
+        <div class="card-title">HISTÓRICO DE MOVIMENTAÇÕES</div>
+        <div style="display:flex;gap:8px;margin-bottom:20px;max-width:320px">
+          <div class="field-group" style="flex:1;margin:0">
+            <label>FILTRAR POR ESTOQUE ID</label>
+            <input type="number" id="filtro-estoque-id" placeholder="ID do estoque"/>
+          </div>
+          <button class="btn btn-ghost" style="align-self:flex-end" onclick="carregarMovimentacoes()">BUSCAR</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#ID</th><th>Estoque ID</th><th>Tipo</th><th>Quantidade</th><th>Data</th></tr></thead>
+            <tbody id="mov-tbody"><tr><td colspan="5" class="empty">Informe um ID de estoque para buscar.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ETAPAS (Admin + Supervisor) ────────────────────── -->
+    <div id="page-etapas" class="page">
+      <div class="page-header">
+        <div class="page-title"><small>MÓDULO 03</small>Etapas de Produção</div>
+        <div id="btn-nova-etapa"></div>
+      </div>
+      <div id="etapas-alert" class="alert"></div>
+      <div class="card">
+        <div class="card-title">FLUXO DE PRODUÇÃO</div>
+        <div id="etapas-list" class="etapa-list"><div class="empty">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- ── ORDENS (Admin + Supervisor) ────────────────────── -->
+    <div id="page-ordens" class="page">
+      <div class="page-header">
+        <div class="page-title"><small>MÓDULO 04</small>Ordens de Produção</div>
+        <div id="btn-nova-op"></div>
+      </div>
+      <div id="ordens-alert" class="alert"></div>
+      <div class="card">
+        <div class="card-title">ORDENS ATIVAS</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>OP#</th><th>Produto</th><th>Quantidade</th><th>Status</th><th></th></tr></thead>
+            <tbody id="ordens-tbody"><tr><td colspan="5" class="empty">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ACOMPANHAMENTO (Admin + Supervisor) ────────────── -->
+    <div id="page-acompanhamento" class="page">
+      <div class="page-header">
+        <div class="page-title"><small>MÓDULO 05</small>Acompanhamento de OP</div>
+      </div>
+      <div id="acomp-alert" class="alert"></div>
+      <div class="grid-2" style="margin-bottom:24px;align-items:end">
+        <div class="field-group" style="margin:0">
+          <label>SELECIONAR ORDEM DE PRODUÇÃO</label>
+          <select id="select-op" onchange="carregarEtapasOP()">
+            <option value="">— selecione uma OP —</option>
+          </select>
+        </div>
+        <div id="op-stats" style="display:none" class="grid-2">
+          <div class="stat-box"><div class="stat-label">Total Etapas</div><div class="stat-value" id="stat-total">0</div></div>
+          <div class="stat-box"><div class="stat-label">Concluídas</div><div class="stat-value" id="stat-done" style="color:var(--green)">0</div></div>
+        </div>
+      </div>
+      <div class="card" id="acomp-card" style="display:none">
+        <div class="card-title">PIPELINE DE ETAPAS</div>
+        <div id="acomp-etapas" class="etapa-list"></div>
+      </div>
+    </div>
+
+    <!-- ── USUÁRIOS (Admin only) ───────────────────────────── -->
+    <div id="page-usuarios" class="page">
+      <div class="page-header">
+        <div class="page-title"><small>ADMINISTRAÇÃO</small>Usuários do Sistema</div>
+        <button class="btn btn-primary" onclick="openModal('modal-usuario')">+ NOVO USUÁRIO</button>
+      </div>
+      <div id="usuarios-alert" class="alert"></div>
+      <div class="card">
+        <div class="card-title">USUÁRIOS CADASTRADOS</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#ID</th><th>Nome</th><th>Login</th><th>Perfil</th><th>Status</th></tr></thead>
+            <tbody id="usuarios-tbody">
+              <!-- lista estática dos perfis disponíveis no sistema -->
+              <tr>
+                <td style="font-family:var(--mono);color:var(--text-dim)">#1</td>
+                <td style="font-weight:600;color:var(--text-bright)">Admin</td>
+                <td style="font-family:var(--mono)">admin</td>
+                <td><span class="badge badge-yellow">Admin</span></td>
+                <td><span class="badge badge-green">ATIVO</span></td>
+              </tr>
+              <tr>
+                <td style="font-family:var(--mono);color:var(--text-dim)">#2</td>
+                <td style="font-weight:600;color:var(--text-bright)">Supervisor</td>
+                <td style="font-family:var(--mono)">supervisor</td>
+                <td><span class="badge badge-blue">SupervisorProducao</span></td>
+                <td><span class="badge badge-green">ATIVO</span></td>
+              </tr>
+              <tr>
+                <td style="font-family:var(--mono);color:var(--text-dim)">#3</td>
+                <td style="font-weight:600;color:var(--text-bright)">Almoxarife</td>
+                <td style="font-family:var(--mono)">almoxarife</td>
+                <td><span class="badge badge-green">Almoxarife</span></td>
+                <td><span class="badge badge-green">ATIVO</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Monitoramento IoT ───────────────────────────── -->
+    <div id="page-iot" class="page">
+      <div class="page-header">
+        <div class="page-title"><small>MÓDULO IoT</small>Monitoramento Industrial</div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-ghost" onclick="carregarSensores()">↻ ATUALIZAR</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 2px; margin-bottom: 20px; border-bottom: 1px solid var(--border);">
+        <button id="btn-sub-leituras" class="nav-btn active" onclick="mudarSubAba('leituras')" style="border-bottom: 2px solid var(--accent); padding: 10px 20px;">
+            TODAS AS LEITURAS
+        </button>
+        <button id="btn-sub-alertas" class="nav-btn" onclick="mudarSubAba('alertas')" style="padding: 10px 20px;">
+            ALERTAS CRÍTICOS <span id="badge-count-alertas" style="background: var(--red); color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; display: none;">0</span>
+        </button>
+      </div>
+
+      <div id="sub-page-leituras" class="sub-page">
+        <div class="card">
+          <div class="card-title">HISTÓRICO COMPLETO</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th><th>Máquina</th><th>Tipo</th><th>Valor</th><th>Data/Hora</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="iot-tbody">
+                <tr><td colspan="6" class="empty">Carregando dados...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="sub-page-alertas" class="sub-page" style="display: none;">
+        <div class="card" style="border-top: 3px solid var(--red);">
+          <div class="card-title" style="color: var(--red);">OCORRÊNCIAS CRÍTICAS</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr style="color: var(--red);">
+                  <th>ID</th><th>Máquina</th><th>Tipo</th><th>Valor Registrado</th><th>Horário</th>
+                </tr>
+              </thead>
+              <tbody id="iot-alertas-tbody">
+                <tr><td colspan="5" class="empty">Nenhum alerta crítico detectado.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── LOGS (Admin only) ───────────────────────────────── -->
+    <div id="page-logs" class="page">
+      <div class="page-header">
+        <div class="page-title"><small>AUDITORIA</small>Logs do Sistema</div>
+        <button class="btn btn-ghost" onclick="renderLogs()">↻ ATUALIZAR</button>
+      </div>
+      <div class="card">
+        <div class="card-title">REGISTRO DE ATIVIDADES</div>
+        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:flex-end">
+          <div class="field-group" style="margin:0;min-width:140px">
+            <label>FILTRAR TIPO</label>
+            <select id="log-filtro-tipo" onchange="renderLogs()">
+              <option value="">TODOS</option>
+              <option value="LOGIN_OK">LOGIN_OK</option>
+              <option value="LOGIN_FAIL">LOGIN_FAIL</option>
+              <option value="PRODUTO">PRODUTO</option>
+              <option value="ESTOQUE">ESTOQUE</option>
+              <option value="PRODUCAO">PRODUCAO</option>
+            </select>
+          </div>
+        </div>
+        <div id="logs-container" style="max-height:520px;overflow-y:auto;"></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAIS
+═══════════════════════════════════════════════════════════ -->
+
+<!-- Produto -->
+<div class="modal-overlay" id="modal-produto">
+  <div class="modal">
+    <div class="modal-title">Cadastrar Produto</div>
+    <div id="mprod-alert" class="alert"></div>
+    <div class="form-row">
+      <div class="field-group"><label>NOME</label><input type="text" id="prod-nome" placeholder="Nome do produto"/></div>
+      <div class="field-group"><label>PREÇO (R$)</label><input type="number" id="prod-preco" step="0.01" placeholder="0.00"/></div>
+    </div>
+    <div class="field-group"><label>DESCRIÇÃO</label><input type="text" id="prod-descricao" placeholder="Descrição"/></div>
+    <hr class="divider"/>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:2px;margin-bottom:16px">DADOS DE ESTOQUE</div>
+    <div class="form-row">
+      <div class="field-group"><label>QUANTIDADE INICIAL</label><input type="number" id="prod-qtd" placeholder="0"/></div>
+      <div class="field-group"><label>ESTOQUE MÍNIMO</label><input type="number" id="prod-minimo" placeholder="0"/></div>
+      <div class="field-group"><label>UNIDADE</label><input type="text" id="prod-unidade" placeholder="un, kg, L..."/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-produto')">CANCELAR</button>
+      <button class="btn btn-primary" onclick="cadastrarProduto()">SALVAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- Movimentação -->
+<div class="modal-overlay" id="modal-movimentacao">
+  <div class="modal">
+    <div class="modal-title">Nova Movimentação</div>
+    <div id="mmov-alert" class="alert"></div>
+    <div class="form-row">
+      <div class="field-group"><label>ESTOQUE ID</label><input type="number" id="mov-estoque-id" placeholder="ID"/></div>
+      <div class="field-group"><label>TIPO</label><select id="mov-tipo"><option value="Entrada">Entrada</option><option value="Saida">Saída</option></select></div>
+      <div class="field-group"><label>QUANTIDADE</label><input type="number" id="mov-qtd" placeholder="0"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-movimentacao')">CANCELAR</button>
+      <button class="btn btn-primary" onclick="registrarMovimentacao()">REGISTRAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- Etapa -->
+<div class="modal-overlay" id="modal-etapa">
+  <div class="modal">
+    <div class="modal-title">Nova Etapa de Produção</div>
+    <div id="meta-alert" class="alert"></div>
+    <div class="form-row">
+      <div class="field-group"><label>NOME DA ETAPA</label><input type="text" id="etapa-nome" placeholder="Ex: Corte, Montagem..."/></div>
+      <div class="field-group"><label>ORDEM</label><input type="number" id="etapa-ordem" placeholder="1"/></div>
+    </div>
+    <div class="field-group"><label>DESCRIÇÃO</label><input type="text" id="etapa-descricao" placeholder="Descrição da etapa"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-etapa')">CANCELAR</button>
+      <button class="btn btn-primary" onclick="cadastrarEtapa()">SALVAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ordem de Produção -->
+<div class="modal-overlay" id="modal-op">
+  <div class="modal">
+    <div class="modal-title">Nova Ordem de Produção</div>
+    <div id="mop-alert" class="alert"></div>
+    <div class="form-row">
+      <div class="field-group"><label>Nº DA OP</label><input type="number" id="op-numero" placeholder="Ex: 1001"/></div>
+      <div class="field-group"><label>QUANTIDADE</label><input type="number" id="op-qtd" placeholder="0"/></div>
+    </div>
+    <div class="field-group"><label>PRODUTO</label><select id="op-produto"><option value="">— selecione —</option></select></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-op')">CANCELAR</button>
+      <button class="btn btn-primary" onclick="criarOP()">CRIAR OP</button>
+    </div>
+  </div>
+</div>
+
+<!-- Novo Usuário (Admin) -->
+<div class="modal-overlay" id="modal-usuario">
+  <div class="modal">
+    <div class="modal-title">Novo Usuário</div>
+    <div id="musu-alert" class="alert"></div>
+    <div class="form-row">
+      <div class="field-group"><label>NOME</label><input type="text" id="usu-nome" placeholder="Nome completo"/></div>
+      <div class="field-group"><label>LOGIN</label><input type="text" id="usu-login" placeholder="login"/></div>
+    </div>
+    <div class="form-row">
+      <div class="field-group"><label>SENHA</label><input type="password" id="usu-senha" placeholder="••••••••"/></div>
+      <div class="field-group">
+        <label>PERFIL</label>
+        <select id="usu-perfil">
+          <option value="">— selecione —</option>
+          <option value="2">SupervisorProducao</option>
+          <option value="3">TecnicoManutencao</option>
+          <option value="4">Almoxarife</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-usuario')">CANCELAR</button>
+      <button class="btn btn-primary" onclick="criarUsuario()">CRIAR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  CONFIGURAÇÃO
+// ════════════════════════════════════════════════════════════
+const API  = '/api';   // ajuste se rodar frontend separado: 'http://localhost:5XXX/api'
+let token  = '';
+let perfil = '';  // 'Admin' | 'SupervisorProducao' | 'Almoxarife'
+let nomeUsuario = '';
+let ultimoIdNotificado = 0;
+
+// Log local (em memória) — Admin consegue ver tudo que aconteceu nesta sessão
+const sessionLogs = [];
+
+// ── Permissões por perfil ─────────────────────────────────
+const PERMISSOES = {
+  Admin: {
+    paginas:  ['dashboard','produtos','estoque','etapas','ordens','acompanhamento','usuarios','logs','iot'],
+    primeiraP: 'dashboard',
+    podeNovoProduto:   true,
+    podeNovaMovimento: true,
+    podeNovaEtapa:     true,
+    podeRemoverEtapa:  true,
+    podeNovaOP:        true,
+    podeAcaoEtapaOP:   true,
+    podeRemoverProduto: true,
+  },
+  SupervisorProducao: {
+    paginas:  ['produtos','etapas','ordens','acompanhamento'],
+    primeiraP: 'produtos',
+    podeNovoProduto:   false,
+    podeNovaMovimento: false,
+    podeNovaEtapa:     true,
+    podeRemoverEtapa:  false,
+    podeNovaOP:        true,
+    podeAcaoEtapaOP:   true,
+    podeRemoverProduto: false,
+  },
+  Almoxarife: {
+    paginas:  ['produtos','estoque'],
+    primeiraP: 'produtos',
+    podeNovoProduto:   true,
+    podeNovaMovimento: true,
+    podeNovaEtapa:     false,
+    podeRemoverEtapa:  false,
+    podeNovaOP:        false,
+    podeAcaoEtapaOP:   false,
+    podeRemoverProduto: false,
+  }
+};
+
+// Nomes de exibição das páginas na nav
+const PAGE_LABELS = {
+  dashboard:      'Dashboard',
+  produtos:       'Produtos',
+  estoque:        'Estoque',
+  etapas:         'Etapas',
+  ordens:         'Ordens de Produção',
+  acompanhamento: 'Acompanhamento',
+  iot:            'Monitoramento IoT',
+  usuarios:       'Usuários',
+  logs:           'Logs',
+};
+
+// ════════════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════════════
+function headers() {
+  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+}
+
+function perm() { return PERMISSOES[perfil] || {}; }
+
+function showAlert(id, msg, isErr = false, show = true) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'alert ' + (isErr ? 'alert-err' : 'alert-ok') + (show && msg ? ' show' : '');
+  if (show && msg) setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+function addLog(tipo, ator, acao, ok = true) {
+  sessionLogs.unshift({ ts: new Date(), tipo, ator, acao, ok });
+  if (sessionLogs.length > 300) sessionLogs.pop();
+}
+
+// função para disparar alerta sensores IoT
+function dispararNotificacao(titulo, msg, tipo = 'normal') {
+    const container = document.getElementById('global-alert-container');
+    const toast = document.createElement('div');
+    
+    // Estilização foda
+    toast.style.background = 'var(--surface)';
+    toast.style.borderLeft = `4px solid ${tipo === 'critico' ? 'var(--red)' : 'var(--accent)'}`;
+    toast.style.borderTop = '1px solid var(--border)';
+    toast.style.padding = '16px';
+    toast.style.marginBottom = '10px';
+    toast.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+    toast.style.animation = 'slideIn 0.3s ease-out';
+    
+    toast.innerHTML = `
+        <div style="font-family:var(--mono); font-size:10px; color:${tipo === 'critico' ? 'var(--red)' : 'var(--accent)'}; letter-spacing:2px; margin-bottom:5px;">
+            ${tipo === 'critico' ? '⚠️ ALERTA DE SISTEMA' : 'ℹ️ NOTIFICAÇÃO'}
+        </div>
+        <div style="font-family:var(--cond); font-size:16px; font-weight:700; color:var(--text-bright); margin-bottom:4px;">${titulo}</div>
+        <div style="font-family:var(--sans); font-size:13px; color:var(--text-dim);">${msg}</div>
+    `;
+
+    container.appendChild(toast);
+
+    // Remove o alerta depois de 8 segundos
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = '0.5s';
+        setTimeout(() => toast.remove(), 500);
+    }, 8000);
+}
+
+// ════════════════════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════════════════════
+async function doLogin() {
+  const login = document.getElementById('login-input').value.trim();
+  const senha = document.getElementById('senha-input').value;
+  showAlert('login-alert', '', false, false);
+
+  if (!login || !senha)
+    return showAlert('login-alert', 'Preencha login e senha.', true, true);
+
+  try {
+    const res  = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login, senha })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      addLog('LOGIN_FAIL', login, data.erro || 'Credenciais inválidas', false);
+      return showAlert('login-alert', data.erro || 'Credenciais inválidas.', true, true);
+    }
+
+    token       = data.token;
+    nomeUsuario = data.usuario.nome;
+
+    // Decodifica o payload do JWT para pegar o cargo
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    perfil = payload.cargo || '';
+
+    addLog('LOGIN_OK', nomeUsuario, `Login efetuado como ${perfil}`, true);
+
+    // Verifica se o perfil tem acesso configurado
+    if (!PERMISSOES[perfil]) {
+      return showAlert('login-alert', `Perfil '${perfil}' sem acesso configurado.`, true, true);
+    }
+
+    // Monta a interface para o perfil
+    document.getElementById('user-nome-badge').textContent = nomeUsuario.toUpperCase();
+    const cargoEl = document.getElementById('user-cargo');
+    cargoEl.textContent = perfil.toUpperCase();
+    cargoEl.className = `perfil-${perfil}`;
+
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+
+    buildNav();
+    goPage(perm().primeiraP);
+
+  } catch(e) {
+    addLog('LOGIN_FAIL', login, 'Erro de conexão', false);
+    showAlert('login-alert', 'Erro ao conectar com o servidor.', true, true);
+  }
+}
+
+function doLogout() {
+  addLog('LOGOUT', nomeUsuario, 'Sessão encerrada', true);
+  token = ''; perfil = ''; nomeUsuario = '';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-input').value = '';
+  document.getElementById('senha-input').value = '';
+}
+
+// ════════════════════════════════════════════════════════════
+//  NAVEGAÇÃO DINÂMICA POR PERFIL
+// ════════════════════════════════════════════════════════════
+function buildNav() {
+  const nav = document.getElementById('topbar-nav');
+  nav.innerHTML = perm().paginas.map((p, i) =>
+    `<button class="nav-btn${i===0?' active':''}" data-page="${p}" onclick="goPage('${p}', this)">
+       ${PAGE_LABELS[p]}
+     </button>`
+  ).join('');
+}
+
+function goPage(name, btn) {
+  // Só navega para páginas permitidas ao perfil
+  if (iotInterval) { clearInterval(iotInterval); iotInterval = null; }
+  if (!perm().paginas.includes(name)) return;
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+  const pageEl = document.getElementById('page-' + name);
+  if (pageEl) pageEl.classList.add('active');
+
+  const btnEl = btn || document.querySelector(`.nav-btn[data-page="${name}"]`);
+  if (btnEl) btnEl.classList.add('active');
+
+  // Carrega dados da página
+  const loaders = {
+      dashboard:      carregarDashboard,
+      produtos:       () => { buildBotoesProdutos(); carregarProdutos(); },
+      estoque:        buildBotoesEstoque,
+      etapas:         () => { buildBotoesEtapas(); carregarEtapas(); },
+      ordens:         () => { buildBotoesOrdens(); carregarOrdens(); },
+      acompanhamento: carregarSelectOP,
+      iot:            () => { carregarSensores(); iotInterval = setInterval(carregarSensores, 10000); }, // ← TROCA ESSA
+      logs:           renderLogs,
+  };
+  loaders[name]?.();
+}
+
+// ════════════════════════════════════════════════════════════
+//  BOTÕES CONDICIONAIS (aparecem só se o perfil tiver permissão)
+// ════════════════════════════════════════════════════════════
+function buildBotoesProdutos() {
+  document.getElementById('btn-novo-produto').innerHTML = perm().podeNovoProduto
+    ? `<button class="btn btn-primary" onclick="openModal('modal-produto')">+ NOVO PRODUTO</button>` : '';
+}
+function buildBotoesEstoque() {
+  document.getElementById('btn-nova-mov').innerHTML = perm().podeNovaMovimento
+    ? `<button class="btn btn-primary" onclick="openModal('modal-movimentacao')">+ NOVA MOVIMENTAÇÃO</button>` : '';
+}
+function buildBotoesEtapas() {
+  document.getElementById('btn-nova-etapa').innerHTML = perm().podeNovaEtapa
+    ? `<button class="btn btn-primary" onclick="openModal('modal-etapa')">+ NOVA ETAPA</button>` : '';
+}
+function buildBotoesOrdens() {
+  document.getElementById('btn-nova-op').innerHTML = perm().podeNovaOP
+    ? `<button class="btn btn-primary" onclick="openModal('modal-op')">+ NOVA OP</button>` : '';
+}
+
+// ════════════════════════════════════════════════════════════
+//  MODAIS
+// ════════════════════════════════════════════════════════════
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'modal-op') popularSelectProdutos();
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ════════════════════════════════════════════════════════════
+//  DASHBOARD (Admin)
+// ════════════════════════════════════════════════════════════
+async function carregarDashboard() {
+  try {
+    const [rP, rO, rE] = await Promise.all([
+      fetch(`${API}/produto`,          { headers: headers() }),
+      fetch(`${API}/producao/ordens`,  { headers: headers() }),
+      fetch(`${API}/producao/etapas`,  { headers: headers() }),
+    ]);
+    const [produtos, ordens, etapas] = await Promise.all([rP.json(), rO.json(), rE.json()]);
+
+    const baixo = produtos.filter(p => p.estoque && p.estoque.quantidade <= p.estoque.estoqueMinimo);
+
+    document.getElementById('ds-produtos').textContent = produtos.length;
+    document.getElementById('ds-ordens').textContent   = ordens.filter(o => o.status !== 'Concluida').length;
+    document.getElementById('ds-etapas').textContent   = etapas.length;
+    document.getElementById('ds-baixo').textContent    = baixo.length;
+
+    // Últimas 5 ordens
+    document.getElementById('dash-ordens-tbody').innerHTML = ordens.slice(0,5).map(op =>
+      `<tr>
+        <td style="font-family:var(--mono);color:var(--accent)">OP#${op.numeroOp}</td>
+        <td>${op.produto?.nome || '—'}</td>
+        <td style="font-family:var(--mono)">${op.quantidade}</td>
+        <td>${badgeStatus(op.status)}</td>
+      </tr>`
+    ).join('') || '<tr><td colspan="4" class="empty">Sem ordens.</td></tr>';
+
+    // Produtos com estoque baixo
+    document.getElementById('dash-baixo-tbody').innerHTML = baixo.slice(0,5).map(p =>
+      `<tr>
+        <td style="font-weight:600;color:var(--text-bright)">${p.nome}</td>
+        <td style="font-family:var(--mono);color:var(--red)">${p.estoque.quantidade}</td>
+        <td style="font-family:var(--mono)">${p.estoque.estoqueMinimo}</td>
+      </tr>`
+    ).join('') || '<tr><td colspan="3" class="empty">Nenhum.</td></tr>';
+
+  } catch(e) { console.error('Dashboard:', e); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  PRODUTOS
+// ════════════════════════════════════════════════════════════
+async function carregarProdutos() {
+  try {
+    const res  = await fetch(`${API}/produto`, { headers: headers() });
+    const data = await res.json();
+    const tbody = document.getElementById('produtos-tbody');
+
+    if (!res.ok) {
+      tbody.innerHTML = `<tr><td colspan="9" class="empty" style="color:var(--red)">${data.erro}</td></tr>`;
+      return;
+    }
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="empty">Nenhum produto cadastrado.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map(p => {
+      const e = p.estoque;
+      const baixo = e && e.quantidade <= e.estoqueMinimo;
+      const btnRemover = perm().podeRemoverProduto
+        ? `<button class="btn btn-danger" style="padding:5px 12px;font-size:11px" onclick="deletarProduto(${p.id})">REMOVER</button>`
+        : '';
+      return `<tr>
+        <td style="font-family:var(--mono);color:var(--text-dim)">#${p.id}</td>
+        <td style="font-weight:600;color:var(--text-bright)">${p.nome}</td>
+        <td style="color:var(--text-dim)">${p.descricao || '—'}</td>
+        <td style="font-family:var(--mono)">R$ ${p.preco?.toFixed(2) || '0.00'}</td>
+        <td style="font-family:var(--mono)">${e ? e.quantidade : '—'}</td>
+        <td style="font-family:var(--mono)">${e ? e.estoqueMinimo : '—'}</td>
+        <td>${e ? e.unidadeMedida : '—'}</td>
+        <td>${e ? (baixo ? '<span class="badge badge-red">BAIXO</span>' : '<span class="badge badge-green">OK</span>') : '<span class="badge badge-gray">S/E</span>'}</td>
+        <td>${btnRemover}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) { showAlert('produtos-alert', 'Erro ao carregar produtos.', true, true); }
+}
+
+async function cadastrarProduto() {
+  const nome         = document.getElementById('prod-nome').value.trim();
+  const descricao    = document.getElementById('prod-descricao').value.trim();
+  const preco        = parseFloat(document.getElementById('prod-preco').value) || 0;
+  const quantidade   = parseInt(document.getElementById('prod-qtd').value) || 0;
+  const estoqueMinimo = parseInt(document.getElementById('prod-minimo').value) || 0;
+  const unidadeMedida = document.getElementById('prod-unidade').value.trim();
+
+  if (!nome) return showAlert('mprod-alert', 'Nome é obrigatório.', true, true);
+
+  try {
+    const res  = await fetch(`${API}/produto`, {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({ produto: { nome, descricao, preco }, estoque: { quantidade, estoqueMinimo, unidadeMedida } })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      addLog('PRODUTO', nomeUsuario, `Falha ao cadastrar ${nome}`, false);
+      return showAlert('mprod-alert', data.erro || 'Erro ao cadastrar.', true, true);
+    }
+    addLog('PRODUTO', nomeUsuario, `Produto '${nome}' cadastrado`, true);
+    closeModal('modal-produto');
+    showAlert('produtos-alert', 'Produto cadastrado com sucesso!', false, true);
+    carregarProdutos();
+    ['prod-nome','prod-descricao','prod-preco','prod-qtd','prod-minimo','prod-unidade']
+      .forEach(id => document.getElementById(id).value = '');
+  } catch(e) { showAlert('mprod-alert', 'Erro de conexão.', true, true); }
+}
+
+async function deletarProduto(id) {
+  if (!confirm(`Remover produto #${id}?`)) return;
+  try {
+    const res  = await fetch(`${API}/produto/${id}`, { method: 'DELETE', headers: headers() });
+    const data = await res.json();
+    if (!res.ok) {
+      addLog('PRODUTO', nomeUsuario, `Falha ao remover produto #${id}`, false);
+      return showAlert('produtos-alert', data.erro || 'Erro ao remover.', true, true);
+    }
+    addLog('PRODUTO', nomeUsuario, `Produto #${id} removido`, true);
+    showAlert('produtos-alert', 'Produto removido.', false, true);
+    carregarProdutos();
+  } catch(e) { showAlert('produtos-alert', 'Erro de conexão.', true, true); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  MOVIMENTAÇÕES
+// ════════════════════════════════════════════════════════════
+async function carregarMovimentacoes() {
+  const id = document.getElementById('filtro-estoque-id').value;
+  if (!id) return;
+  try {
+    const res  = await fetch(`${API}/estoque/${id}/movimentacoes`, { headers: headers() });
+    const data = await res.json();
+    const tbody = document.getElementById('mov-tbody');
+    if (!res.ok) { tbody.innerHTML = `<tr><td colspan="5" class="empty" style="color:var(--red)">${data.erro}</td></tr>`; return; }
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">Nenhuma movimentação encontrada.</td></tr>'; return; }
+    tbody.innerHTML = data.map(m => `<tr>
+      <td style="font-family:var(--mono);color:var(--text-dim)">#${m.id}</td>
+      <td style="font-family:var(--mono)">${m.estoqueId}</td>
+      <td>${m.tipo === 'Entrada' ? '<span class="badge badge-green">ENTRADA</span>' : '<span class="badge badge-red">SAÍDA</span>'}</td>
+      <td style="font-family:var(--mono);font-weight:600">${m.quantidade}</td>
+      <td style="font-family:var(--mono);color:var(--text-dim)">${new Date(m.dataMovimento).toLocaleString('pt-BR')}</td>
+    </tr>`).join('');
+  } catch(e) { showAlert('estoque-alert', 'Erro ao carregar.', true, true); }
+}
+
+async function registrarMovimentacao() {
+  const estoqueId = parseInt(document.getElementById('mov-estoque-id').value);
+  const tipo      = document.getElementById('mov-tipo').value;
+  const quantidade = parseInt(document.getElementById('mov-qtd').value);
+  if (!estoqueId || !quantidade) return showAlert('mmov-alert', 'Preencha todos os campos.', true, true);
+  try {
+    const res  = await fetch(`${API}/estoque/movimentacao`, {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({ estoqueId, tipo, quantidade, dataMovimento: new Date().toISOString() })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      addLog('ESTOQUE', nomeUsuario, `Falha ${tipo} estoque #${estoqueId}`, false);
+      return showAlert('mmov-alert', data.erro || 'Erro.', true, true);
+    }
+    addLog('ESTOQUE', nomeUsuario, `${tipo} de ${quantidade} no estoque #${estoqueId}`, true);
+    closeModal('modal-movimentacao');
+    showAlert('estoque-alert', data.mensagem, false, true);
+    document.getElementById('filtro-estoque-id').value = estoqueId;
+    carregarMovimentacoes();
+  } catch(e) { showAlert('mmov-alert', 'Erro de conexão.', true, true); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  ETAPAS
+// ════════════════════════════════════════════════════════════
+async function carregarEtapas() {
+  try {
+    const res  = await fetch(`${API}/producao/etapas`, { headers: headers() });
+    const data = await res.json();
+    const list = document.getElementById('etapas-list');
+    if (!res.ok) { list.innerHTML = `<div class="empty" style="color:var(--red)">${data.erro}</div>`; return; }
+    if (!data.length) { list.innerHTML = '<div class="empty">Nenhuma etapa cadastrada.</div>'; return; }
+
+    list.innerHTML = data.map(e => {
+      const btnRemover = perm().podeRemoverEtapa
+        ? `<button class="btn btn-danger" style="padding:5px 12px;font-size:11px" onclick="deletarEtapa(${e.id})">REMOVER</button>`
+        : '';
+      return `<div class="etapa-item">
+        <div class="etapa-num">${String(e.ordem).padStart(2,'0')}</div>
+        <div class="etapa-info">
+          <div class="etapa-nome">${e.nomeEtapa}</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:2px">${e.descricao || ''}</div>
+        </div>
+        <div class="etapa-actions">${btnRemover}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { showAlert('etapas-alert', 'Erro ao carregar etapas.', true, true); }
+}
+
+async function cadastrarEtapa() {
+  const nomeEtapa = document.getElementById('etapa-nome').value.trim();
+  const ordem     = parseInt(document.getElementById('etapa-ordem').value);
+  const descricao = document.getElementById('etapa-descricao').value.trim();
+  if (!nomeEtapa || !ordem) return showAlert('meta-alert', 'Nome e ordem são obrigatórios.', true, true);
+  try {
+    const res  = await fetch(`${API}/producao/etapas`, {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({ nomeEtapa, descricao, ordem })
+    });
+    const data = await res.json();
+    if (!res.ok) return showAlert('meta-alert', data.erro || 'Erro.', true, true);
+    addLog('PRODUCAO', nomeUsuario, `Etapa '${nomeEtapa}' cadastrada`, true);
+    closeModal('modal-etapa');
+    showAlert('etapas-alert', 'Etapa cadastrada com sucesso!', false, true);
+    carregarEtapas();
+    ['etapa-nome','etapa-ordem','etapa-descricao'].forEach(id => document.getElementById(id).value = '');
+  } catch(e) { showAlert('meta-alert', 'Erro de conexão.', true, true); }
+}
+
+async function deletarEtapa(id) {
+  if (!confirm(`Remover etapa #${id}?`)) return;
+  try {
+    const res  = await fetch(`${API}/producao/etapas/${id}`, { method: 'DELETE', headers: headers() });
+    const data = await res.json();
+    if (!res.ok) return showAlert('etapas-alert', data.erro || 'Erro.', true, true);
+    addLog('PRODUCAO', nomeUsuario, `Etapa #${id} removida`, true);
+    showAlert('etapas-alert', 'Etapa removida.', false, true);
+    carregarEtapas();
+  } catch(e) { showAlert('etapas-alert', 'Erro de conexão.', true, true); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  ORDENS DE PRODUÇÃO
+// ════════════════════════════════════════════════════════════
+async function carregarOrdens() {
+  try {
+    const res  = await fetch(`${API}/producao/ordens`, { headers: headers() });
+    const data = await res.json();
+    const tbody = document.getElementById('ordens-tbody');
+    if (!res.ok) { tbody.innerHTML = `<tr><td colspan="5" class="empty" style="color:var(--red)">${data.erro}</td></tr>`; return; }
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">Nenhuma ordem criada.</td></tr>'; return; }
+
+    tbody.innerHTML = data.map(op => `<tr>
+      <td style="font-family:var(--mono);font-weight:600;color:var(--accent)">OP#${op.numeroOp}</td>
+      <td style="color:var(--text-bright)">${op.produto?.nome || '—'}</td>
+      <td style="font-family:var(--mono)">${op.quantidade}</td>
+      <td>${badgeStatus(op.status)}</td>
+      <td><button class="btn btn-ghost" style="padding:5px 12px;font-size:11px" onclick="verAcompanhamento(${op.id})">VER ETAPAS</button></td>
+    </tr>`).join('');
+  } catch(e) { showAlert('ordens-alert', 'Erro ao carregar ordens.', true, true); }
+}
+
+async function popularSelectProdutos() {
+  try {
+    const res  = await fetch(`${API}/produto`, { headers: headers() });
+    const data = await res.json();
+    document.getElementById('op-produto').innerHTML =
+      '<option value="">— selecione —</option>' +
+      data.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+  } catch(e) {}
+}
+
+async function criarOP() {
+  const numeroOp  = parseInt(document.getElementById('op-numero').value);
+  const produtoId = parseInt(document.getElementById('op-produto').value);
+  const quantidade = parseInt(document.getElementById('op-qtd').value);
+  if (!numeroOp || !produtoId || !quantidade)
+    return showAlert('mop-alert', 'Preencha todos os campos.', true, true);
+  try {
+    const res  = await fetch(`${API}/producao/ordens`, {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({ numeroOP: numeroOp, produtoId, quantidade, status: 'Aberta' })
+    });
+    const data = await res.json();
+    if (!res.ok) return showAlert('mop-alert', data.erro || 'Erro.', true, true);
+    addLog('PRODUCAO', nomeUsuario, `OP#${numeroOp} criada`, true);
+    closeModal('modal-op');
+    showAlert('ordens-alert', data.mensagem, false, true);
+    carregarOrdens();
+    ['op-numero','op-qtd'].forEach(id => document.getElementById(id).value = '');
+  } catch(e) { showAlert('mop-alert', 'Erro de conexão.', true, true); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  ACOMPANHAMENTO
+// ════════════════════════════════════════════════════════════
+async function carregarSelectOP() {
+  try {
+    const res  = await fetch(`${API}/producao/ordens`, { headers: headers() });
+    const data = await res.json();
+    document.getElementById('select-op').innerHTML =
+      '<option value="">— selecione uma OP —</option>' +
+      data.map(op => `<option value="${op.id}">OP#${op.numeroOp} — ${op.produto?.nome || ''} [${op.status}]</option>`).join('');
+  } catch(e) {}
+}
+
+async function carregarEtapasOP() {
+  const opId = document.getElementById('select-op').value;
+  if (!opId) {
+    document.getElementById('acomp-card').style.display = 'none';
+    document.getElementById('op-stats').style.display = 'none';
+    return;
+  }
+  try {
+    const res  = await fetch(`${API}/producao/ordens/${opId}/etapas`, { headers: headers() });
+    const data = await res.json();
+    if (!res.ok) { showAlert('acomp-alert', data.erro, true, true); return; }
+
+    const total = data.length;
+    const done  = data.filter(e => e.status === 'Concluida').length;
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-done').textContent  = done;
+    document.getElementById('op-stats').style.display = 'grid';
+    document.getElementById('acomp-card').style.display = 'block';
+
+    const podAcao = perm().podeAcaoEtapaOP;
+
+    document.getElementById('acomp-etapas').innerHTML = data.map(e => {
+      const ep          = e.etapaProducao;
+      const isPendente  = e.status === 'Pendente';
+      const isAndamento = e.status === 'EmAndamento';
+      const isConcluida = e.status === 'Concluida';
+      const cor = isConcluida ? 'var(--green)' : isAndamento ? 'var(--accent)' : 'var(--border)';
+
+      const acoes = podAcao ? `
+        ${isPendente  ? `<button class="btn btn-ghost"   style="padding:5px 12px;font-size:11px" onclick="iniciarEtapa(${e.id})">INICIAR</button>` : ''}
+        ${isAndamento ? `<button class="btn btn-success" style="padding:5px 12px;font-size:11px" onclick="concluirEtapa(${e.id})">CONCLUIR</button>` : ''}
+        ${isConcluida ? `<span style="font-family:var(--mono);font-size:11px;color:var(--green)">✓ CONCLUÍDA</span>` : ''}
+      ` : badgeStatus(e.status);
+
+      return `<div class="etapa-item" style="border-left:3px solid ${cor}">
+        <div class="etapa-num">${String(ep?.ordem || 0).padStart(2,'0')}</div>
+        <div class="etapa-info">
+          <div class="etapa-nome">${ep?.nomeEtapa || '—'}</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:3px;font-family:var(--mono)">
+            ${e.data_Inicio ? 'Início: ' + new Date(e.data_Inicio).toLocaleString('pt-BR') : ''}
+            ${e.data_Fim    ? ' | Fim: '  + new Date(e.data_Fim).toLocaleString('pt-BR')   : ''}
+          </div>
+        </div>
+        <div class="etapa-actions">${acoes}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { showAlert('acomp-alert', 'Erro ao carregar etapas.', true, true); }
+}
+
+async function iniciarEtapa(id) {
+  try {
+    const res  = await fetch(`${API}/producao/etapas-op/${id}/iniciar`, { method: 'PATCH', headers: headers() });
+    const data = await res.json();
+    if (!res.ok) return showAlert('acomp-alert', data.erro, true, true);
+    addLog('PRODUCAO', nomeUsuario, `Etapa OP #${id} iniciada`, true);
+    carregarEtapasOP();
+  } catch(e) {}
+}
+
+async function concluirEtapa(id) {
+  try {
+    const res  = await fetch(`${API}/producao/etapas-op/${id}/concluir`, { method: 'PATCH', headers: headers() });
+    const data = await res.json();
+    if (!res.ok) return showAlert('acomp-alert', data.erro, true, true);
+    addLog('PRODUCAO', nomeUsuario, `Etapa OP #${id} concluída`, true);
+    carregarEtapasOP();
+  } catch(e) {}
+}
+
+async function verAcompanhamento(opId) {
+  goPage('acompanhamento');
+  await carregarSelectOP();
+  document.getElementById('select-op').value = opId;
+  carregarEtapasOP();
+}
+
+// ════════════════════════════════════════════════════════════
+//  USUÁRIOS (Admin) — cadastro via modal
+// ════════════════════════════════════════════════════════════
+async function criarUsuario() {
+  const nome    = document.getElementById('usu-nome').value.trim();
+  const login   = document.getElementById('usu-login').value.trim();
+  const senha   = document.getElementById('usu-senha').value;
+  const perfilId = parseInt(document.getElementById('usu-perfil').value);
+
+  if (!nome || !login || !senha || !perfilId)
+    return showAlert('musu-alert', 'Preencha todos os campos.', true, true);
+
+  try {
+    // Endpoint de criação de usuário — implemente no backend se necessário
+    const res = await fetch(`${API}/auth/registrar`, {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({ nome, login, senha, perfilId })
+    });
+    const data = await res.json();
+    if (!res.ok) return showAlert('musu-alert', data.erro || 'Erro ao criar usuário.', true, true);
+    addLog('USUARIO', nomeUsuario, `Usuário '${login}' criado (perfilId ${perfilId})`, true);
+    closeModal('modal-usuario');
+    showAlert('usuarios-alert', `Usuário '${login}' criado com sucesso.`, false, true);
+    ['usu-nome','usu-login','usu-senha'].forEach(id => document.getElementById(id).value = '');
+  } catch(e) { showAlert('musu-alert', 'Erro de conexão.', true, true); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  LOGS (Admin — sessão em memória)
+// ════════════════════════════════════════════════════════════
+function renderLogs() {
+  const filtro    = document.getElementById('log-filtro-tipo')?.value || '';
+  const container = document.getElementById('logs-container');
+  const lista     = filtro ? sessionLogs.filter(l => l.tipo === filtro) : sessionLogs;
+
+  if (!lista.length) {
+    container.innerHTML = '<div class="empty">Nenhum registro nesta sessão.</div>';
+    return;
+  }
+
+  container.innerHTML = lista.map(l => `
+    <div class="log-row">
+      <span class="log-time">${l.ts.toLocaleTimeString('pt-BR')}</span>
+      <span class="badge ${l.ok ? 'badge-green' : 'badge-red'}" style="font-size:9px;padding:2px 6px">${l.tipo}</span>
+      <span class="log-actor">${l.ator}</span>
+      <span class="log-action ${l.ok ? 'log-ok' : 'log-fail'}">${l.acao}</span>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════════════════════
+function badgeStatus(s) {
+  const map = {
+    'Pendente':    'badge-gray',
+    'EmAndamento': 'badge-yellow',
+    'Concluida':   'badge-green',
+    'Aberta':      'badge-blue',
+    'Cancelado':   'badge-red'
+  };
+  return `<span class="badge ${map[s] || 'badge-gray'}">${s || '—'}</span>`;
+}
+
+// Variável para controlar o auto-refresh (pode colocar lá no topo do JS)
+let iotInterval = null;
+
+// ════════════════════════════════════════════════════════════
+//  IoT
+// ════════════════════════════════════════════════════════════
+// Função para trocar entre as sub-abas
+function mudarSubAba(aba) {
+    // Esconde todas as sub-pages
+    document.querySelectorAll('.sub-page').forEach(p => p.style.display = 'none');
+    // Remove o estilo ativo dos botões de sub-aba
+    document.getElementById('btn-sub-leituras').style.borderBottom = 'none';
+    document.getElementById('btn-sub-alertas').style.borderBottom = 'none';
+    document.getElementById('btn-sub-leituras').classList.remove('active');
+    document.getElementById('btn-sub-alertas').classList.remove('active');
+
+    // Mostra a selecionada
+    document.getElementById('sub-page-' + aba).style.display = 'block';
+    const btnAtivo = document.getElementById('btn-sub-' + aba);
+    btnAtivo.style.borderBottom = '2px solid var(--accent)';
+    btnAtivo.classList.add('active');
+}
+
+// Função para mostrar dados dos sensores
+async function carregarSensores() {
+  try {
+    const [resLeituras, resAlertas] = await Promise.all([
+      fetch(`${API}/Sensor`, { headers: headers() }),
+      fetch(`${API}/Sensor/alertas`, { headers: headers() })
+    ]);
+
+    const tbodyGeral   = document.getElementById('iot-tbody');
+    const tbodyAlertas = document.getElementById('iot-alertas-tbody');
+    const badgeAlertas = document.getElementById('badge-count-alertas');
+
+    const leituras = await resLeituras.json();
+    const alertas  = await resAlertas.json();
+
+    // Tabela de leituras
+    tbodyGeral.innerHTML = leituras.map(l => {
+      const v = parseFloat(l.valor);
+      const t = (l.tipo_Leitura || "").toUpperCase();
+      const isAlerta = (t.includes("TEMP") && v > 35) || (t.includes("VIBRA") && v > 80);
+      const statusBadge = isAlerta ? '<span class="badge badge-red">CRÍTICO</span>' : '<span class="badge badge-green">NORMAL</span>';
+      return `<tr>
+        <td style="font-family:var(--mono);color:var(--text-dim)">#${l.id_leitura}</td>
+        <td style="font-weight:600">${l.descricao || ''}</td>
+        <td>${t}</td>
+        <td style="font-weight:600;color:${isAlerta ? 'var(--red)' : 'var(--accent)'}">${v.toFixed(1)} ${l.unidade || ''}</td>
+        <td style="font-family:var(--mono);color:var(--text-dim)">${new Date(l.data_leitura).toLocaleString()}</td>
+        <td>${statusBadge}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="6" class="empty">Sem dados.</td></tr>';
+
+    // Tabela de alertas
+    tbodyAlertas.innerHTML = alertas.map(a => `
+      <tr style="background:rgba(231,76,60,0.05)">
+        <td style="color:var(--red);font-family:var(--mono)">#${a.id_alerta}</td>
+        <td style="font-weight:600">${a.id_sensor}</td>
+        <td>${(a.tipo_alerta || '').toUpperCase()}</td>
+        <td style="color:var(--red);font-weight:bold">${parseFloat(a.valor_detectado).toFixed(1)}</td>
+        <td style="font-family:var(--mono)">${new Date(a.data_alerta).toLocaleTimeString()}</td>
+      </tr>`
+    ).join('') || '<tr><td colspan="5" class="empty">✅ Sistema estável.</td></tr>';
+
+    // Badge contador
+    if (badgeAlertas) {
+      badgeAlertas.innerText = alertas.length;
+      badgeAlertas.style.display = alertas.length > 0 ? 'inline-block' : 'none';
+    }
+
+    // Notificação do mais recente
+    if (alertas.length > 0) {
+      const ultimo = alertas[0];
+      if (ultimo.id_alerta > ultimoIdNotificado) {
+        dispararNotificacao(`RISCO: Sensor ${ultimo.id_sensor}`, `${ultimo.tipo_alerta} em ${parseFloat(ultimo.valor_detectado).toFixed(1)}`, 'critico');
+        ultimoIdNotificado = ultimo.id_alerta;
+      }
+    }
+
+  } catch(e) {
+    console.error("Erro na carga IoT:", e);
+  }
+}
+</script>
+</body>
+</html>
