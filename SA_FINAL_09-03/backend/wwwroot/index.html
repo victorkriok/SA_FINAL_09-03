@@ -1302,55 +1302,77 @@ async function carregarSensores() {
   try {
     const [resLeituras, resAlertas] = await Promise.all([
       fetch(`${API}/Sensor`, { headers: headers() }),
-      fetch(`${API}/Sensor/alertas`, { headers: headers() })
+      fetch(`${API}/Sensor/alertas`, { headers: headers() }) // Novo endpoint da Equipe 4/2
     ]);
 
     const tbodyGeral   = document.getElementById('iot-tbody');
     const tbodyAlertas = document.getElementById('iot-alertas-tbody');
     const badgeAlertas = document.getElementById('badge-count-alertas');
 
-    const leituras = await resLeituras.json();
-    const alertas  = await resAlertas.json();
+    let leituras = await resLeituras.json();
+    let alertas  = await resAlertas.json();
 
-    // Tabela de leituras
+    // Inverte a lista para o alerta mais novo ficar sempre no topo
+    if(Array.isArray(alertas)) alertas.reverse();
+
+    // 1. Tabela de leituras (Atualizada com as regras da Equipe 2)
     tbodyGeral.innerHTML = leituras.map(l => {
-      const v = parseFloat(l.valor);
-      const t = (l.tipo_Leitura || "").toUpperCase();
-      const isAlerta = (t.includes("TEMP") && v > 35) || (t.includes("VIBRA") && v > 80);
-      const statusBadge = isAlerta ? '<span class="badge badge-red">CRÍTICO</span>' : '<span class="badge badge-green">NORMAL</span>';
+      const v = parseFloat(l.valor || l.Valor || 0);
+      const t = (l.tipo_Leitura || l.tipo_leitura || "").toUpperCase();
+      
+      // NOVAS REGRAS DE NEGÓCIO:
+      let isAlerta = false;
+      if (t.includes("TEMP") && v > 80) isAlerta = true;
+      if (t.includes("VIBRA") && v > 2.0) isAlerta = true;
+      if (t.includes("HORAS") && v > 500) isAlerta = true;
+
+      const statusBadge = isAlerta ? '<span class="badge badge-red" style="font-weight:bold">CRÍTICO</span>' : '<span class="badge badge-green">NORMAL</span>';
+      
       return `<tr>
-        <td style="font-family:var(--mono);color:var(--text-dim)">#${l.id_leitura}</td>
-        <td style="font-weight:600">${l.descricao || ''}</td>
+        <td style="font-family:var(--mono);color:var(--text-dim)">#${l.id_leitura || l.id || 0}</td>
+        <td style="font-weight:600">${l.descricao || l.Descricao || 'Equipamento'}</td>
         <td>${t}</td>
         <td style="font-weight:600;color:${isAlerta ? 'var(--red)' : 'var(--accent)'}">${v.toFixed(1)} ${l.unidade || ''}</td>
-        <td style="font-family:var(--mono);color:var(--text-dim)">${new Date(l.data_leitura).toLocaleString()}</td>
+        <td style="font-family:var(--mono);color:var(--text-dim)">${new Date(l.data_leitura || l.Data_Leitura || l.DataRegistro).toLocaleString('pt-BR')}</td>
         <td>${statusBadge}</td>
       </tr>`;
     }).join('') || '<tr><td colspan="6" class="empty">Sem dados.</td></tr>';
 
-    // Tabela de alertas
-    tbodyAlertas.innerHTML = alertas.map(a => `
-      <tr style="background:rgba(231,76,60,0.05)">
-        <td style="color:var(--red);font-family:var(--mono)">#${a.id_alerta}</td>
-        <td style="font-weight:600">${a.id_sensor}</td>
-        <td>${(a.tipo_alerta || '').toUpperCase()}</td>
-        <td style="color:var(--red);font-weight:bold">${parseFloat(a.valor_detectado).toFixed(1)}</td>
-        <td style="font-family:var(--mono)">${new Date(a.data_alerta).toLocaleTimeString()}</td>
-      </tr>`
-    ).join('') || '<tr><td colspan="5" class="empty">✅ Sistema estável.</td></tr>';
+    // 2. Tabela de alertas (Blindada para aceitar os nomes de campo do C# da Equipe 2)
+    tbodyAlertas.innerHTML = alertas.map(a => {
+      // Pega o valor independente do nome que a API mandar
+      const idAlerta = a.id_alerta || a.Id || 0;
+      const idEquip = a.id_sensor || a.EquipamentoId || a.id_equipamento || 'Desc.';
+      const tipo = (a.tipo_alerta || a.TipoAlerta || 'ALERTA').toUpperCase();
+      const desc = a.descricao || a.Descricao || a.valor_detectado || 'Limite excedido';
+      const dataAlerta = a.data_alerta || a.DataAlerta || new Date();
 
-    // Badge contador
+      return `<tr style="background:rgba(231,76,60,0.05)">
+        <td style="color:var(--red);font-family:var(--mono)">#${idAlerta}</td>
+        <td style="font-weight:600">EQP-${idEquip}</td>
+        <td>${tipo}</td>
+        <td style="color:var(--red);font-weight:bold">${desc}</td>
+        <td style="font-family:var(--mono)">${new Date(dataAlerta).toLocaleTimeString('pt-BR')}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="5" class="empty">✅ Sistema operando dentro da normalidade.</td></tr>';
+
+    // 3. Atualizar Badge (contador da aba)
     if (badgeAlertas) {
       badgeAlertas.innerText = alertas.length;
       badgeAlertas.style.display = alertas.length > 0 ? 'inline-block' : 'none';
     }
 
-    // Notificação do mais recente
+    // 4. Notificação Toast (Flutuante)
     if (alertas.length > 0) {
       const ultimo = alertas[0];
-      if (ultimo.id_alerta > ultimoIdNotificado) {
-        dispararNotificacao(`RISCO: Sensor ${ultimo.id_sensor}`, `${ultimo.tipo_alerta} em ${parseFloat(ultimo.valor_detectado).toFixed(1)}`, 'critico');
-        ultimoIdNotificado = ultimo.id_alerta;
+      const idUltimo = ultimo.id_alerta || ultimo.Id || 0;
+      
+      if (idUltimo > ultimoIdNotificado && typeof dispararNotificacao === 'function') {
+        const idEqp = ultimo.id_sensor || ultimo.EquipamentoId || '';
+        const tipoAlerta = ultimo.tipo_alerta || ultimo.TipoAlerta || 'ALERTA';
+        
+        dispararNotificacao(`RISCO DETECTADO (EQP-${idEqp})`, tipoAlerta, 'critico');
+        ultimoIdNotificado = idUltimo; // Atualiza para não apitar de novo
       }
     }
 

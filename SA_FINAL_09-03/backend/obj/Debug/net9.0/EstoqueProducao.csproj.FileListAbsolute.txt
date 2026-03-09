@@ -115,10 +115,12 @@ C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj
 C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj\Debug\net9.0\EstoqueProducao.csproj.CoreCompileInputs.cache
 C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj\Debug\net9.0\EstoqueProducao.MvcApplicationPartsAssemblyInfo.cs
 C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj\Debug\net9.0\EstoqueProducao.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj\Debug\net9.0\EstoqueProducao.sourcelink.json
 C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj\Debug\net9.0\rjimswa.dswa.cache.json
 C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj\Debug\net9.0\rjsmrazor.dswa.cache.json
 C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj\Debug\net9.0\rjsmcshtml.dswa.cache.json
 C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj\Debug\net9.0\scopedcss\bundle\EstoqueProducao.styles.css
+C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj\Debug\net9.0\compressed\zdiu98mx4f-{0}-w31yjhywh3-w31yjhywh3.gz
 C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj\Debug\net9.0\staticwebassets.build.json
 C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj\Debug\net9.0\staticwebassets.build.json.cache
 C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj\Debug\net9.0\staticwebassets.development.json
@@ -130,4 +132,3 @@ C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj
 C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj\Debug\net9.0\EstoqueProducao.pdb
 C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj\Debug\net9.0\EstoqueProducao.genruntimeconfig.cache
 C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj\Debug\net9.0\ref\EstoqueProducao.dll
-C:\Users\Davi\Downloads\SA_FINAL_09-03\SA_FINAL_09-03\SA_FINAL_09-03\backend\obj\Debug\net9.0\compressed\zdiu98mx4f-{0}-rqs25pqob2-rqs25pqob2.gz
